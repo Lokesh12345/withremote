@@ -1,12 +1,37 @@
-# Working screenshots 
+# Backend assignment — data correctness & failure handling
+
+Two backend problems, both about **data that doesn't lie**: correctness under
+failure, and one metric that never drifts. No UI — CLIs, a couple of APIs, and
+tests that prove the guarantees.
+
+### Working screenshots
 <img width="1534" height="482" alt="image" src="https://github.com/user-attachments/assets/a56d25f8-17de-46b1-9fb2-a830abde3976" />
 
+## What's here
+
+| | Problem | Solution | Verified against |
+|---|---------|----------|------------------|
+| **PS1** | A sync pipeline that doesn't lie or duplicate data | [`syncpipe/`](#syncpipe) — normalize 3 sources, stale-cursor→backfill, idempotent writes, fault isolation | live HubSpot + Stripe + Google Calendar |
+| **PS2** | One revenue number that never drifts | [`metrics/`](#problem-statement-2--canonical-revenue-metric-metrics) — allow-list "collected", two agreeing views, single-definition guard | live Stripe + Supabase Postgres |
+
+## Shared setup
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env        # fill in creds for live/Supabase; fake mode needs none
+```
+
+`.env` is git-ignored (secrets never committed). PS1 runs fully offline in fake
+mode; PS2 needs a Supabase `DATABASE_URL`. See `.env.example` for every variable.
+
+---
 
 # syncpipe
 
-A resilient sync pipeline that ingests records from three differently-shaped
-sources — **HubSpot** (CRM contacts), **Stripe** (payments), and **Google
-Calendar** (events) — into **one normalized SQLite schema**.
+**(PS1)** A resilient sync pipeline that ingests records from three
+differently-shaped sources — **HubSpot** (CRM contacts), **Stripe** (payments),
+and **Google Calendar** (events) — into **one normalized SQLite schema**.
 
 It is built around the four correctness/failure requirements of the assignment:
 
