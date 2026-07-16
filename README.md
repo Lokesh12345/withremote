@@ -242,6 +242,52 @@ Verified against live Supabase: summary `USD 396.99 / EUR 80.00` equals the
 day-by-day breakdown summed; `pos/disputed` (9000) is excluded and surfaced;
 the guard test fails when a rogue `SUM(amount_minor)` is added elsewhere.
 
+## Live API — every endpoint (curl)
+
+Deployed on Render: **https://revenue-metrics-5dum.onrender.com**
+
+```bash
+BASE="https://revenue-metrics-5dum.onrender.com"   # or http://localhost:8100 locally
+
+# 1) health check
+curl "$BASE/health"
+
+# 2) summary total — collected revenue per currency for a date range
+curl "$BASE/metrics/revenue?start=2026-07-01&end=2026-08-01"
+
+# 3) breakdown — same number, per day
+curl "$BASE/metrics/revenue/breakdown?start=2026-07-01&end=2026-08-01&bucket=day"
+
+# 4) breakdown — per week
+curl "$BASE/metrics/revenue/breakdown?start=2026-07-01&end=2026-08-01&bucket=week"
+
+# 5) unmapped statuses — excluded from revenue, surfaced (never silent)
+curl "$BASE/metrics/unmapped"
+```
+
+Both views agree: the buckets in (3) sum to the totals in (2) — `USD 396.99`,
+`EUR 80.00`.
+
+> Note: the free Render instance sleeps after inactivity. The first request may
+> take ~30s to wake, and Cloudflare can briefly cache a cold-start `404`. If you
+> hit one, append a unique query param to bypass the edge cache, e.g.
+> `...&cb=1`.
+
+### PS1 webhook receiver (run locally)
+
+```bash
+uvicorn syncpipe.webhook:app --port 8000
+
+curl "http://localhost:8000/health"
+
+# same webhook fired twice -> exactly one row (idempotent)
+curl -XPOST "http://localhost:8000/webhook/stripe" \
+  -H 'Content-Type: application/json' \
+  -d '{"delivery_id":"evt_1","records":[{"id":"pi_9","amount":500,"currency":"usd","status":"succeeded","created":1752660000}]}'
+
+# sources: /webhook/stripe · /webhook/hubspot · /webhook/gcal
+```
+
 ## Metrics layout
 ```
 metrics/
