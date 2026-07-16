@@ -4,8 +4,17 @@ Two backend problems, both about **data that doesn't lie**: correctness under
 failure, and one metric that never drifts. No UI — CLIs, a couple of APIs, and
 tests that prove the guarantees.
 
-### Working screenshots
+### Working screenshots Requirement -1
 <img width="1534" height="482" alt="image" src="https://github.com/user-attachments/assets/a56d25f8-17de-46b1-9fb2-a830abde3976" />
+<img width="1928" height="1114" alt="image" src="https://github.com/user-attachments/assets/7d76376d-1dd9-4063-8d17-1fd2665b035e" />
+<img width="1880" height="764" alt="image" src="https://github.com/user-attachments/assets/fb1d99cb-adf7-432e-95f1-eccc1fe036a9" />
+<img width="1630" height="484" alt="image" src="https://github.com/user-attachments/assets/671de5c7-275a-4831-93bf-6a14b8b4d78f" />
+
+
+### Working screenshots Requirement -2
+<img width="1882" height="618" alt="image" src="https://github.com/user-attachments/assets/5dccb68c-432b-4dc9-9db0-4b2c2086a080" />
+
+
 
 ## What's here
 
