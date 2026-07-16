@@ -1,3 +1,7 @@
+# Working screenshots 
+<img width="1534" height="482" alt="image" src="https://github.com/user-attachments/assets/a56d25f8-17de-46b1-9fb2-a830abde3976" />
+
+
 # syncpipe
 
 A resilient sync pipeline that ingests records from three differently-shaped
