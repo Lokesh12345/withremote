@@ -1,0 +1,17 @@
+# Secrets & local state
+.env
+*.db
+*.db-journal
+google_credentials.json
+google_token.json
+.env
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Google OAuth client secret downloaded under its original name
+client_secret_*.json

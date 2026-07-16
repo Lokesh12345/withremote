@@ -1,0 +1,16 @@
+# Core — always needed
+python-dotenv>=1.0.0
+requests>=2.31.0
+
+# Webhook receiver
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+httpx>=0.27.0            # also used by the webhook demo's TestClient
+
+# Stripe (live mode only)
+stripe>=8.0.0
+
+# Google Calendar (live mode only)
+google-api-python-client>=2.0.0
+google-auth>=2.0.0
+google-auth-oauthlib>=1.0.0
