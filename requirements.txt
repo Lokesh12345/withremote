@@ -14,3 +14,7 @@ stripe>=8.0.0
 google-api-python-client>=2.0.0
 google-auth>=2.0.0
 google-auth-oauthlib>=1.0.0
+
+# Metrics service (Problem Statement 2) — Supabase Postgres + tests
+psycopg[binary]>=3.1.0
+pytest>=8.0.0

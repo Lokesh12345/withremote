@@ -159,3 +159,63 @@ syncpipe/
   webhook.py        FastAPI receiver (same upsert path)
 demos/              the three proof scripts
 ```
+
+---
+
+# Problem Statement 2 — canonical revenue metric (metrics/)
+
+One "collected revenue" number that never drifts, over multiple sources with
+different status vocabularies, stored in **Supabase Postgres**.
+
+## The four requirements → where each is satisfied
+
+| # | Requirement | Implementation | Proof |
+|---|-------------|----------------|-------|
+| 1 | Canonical "collected" via **allow-list**, not exclusion list | `status_map` maps each source's raw status → canonical enum; `collected_transactions` view keeps only `canonical_status ∈ COLLECTED_ALLOW_LIST`; unmapped statuses INNER-join out | `tests/test_allowlist.py` |
+| 2 | Same number through two views that always agree | `/metrics/revenue` (summary) and `/metrics/revenue/breakdown` (day/week) both call the single `collected_revenue()` | `tests/test_agreement.py` (summary == Σ breakdown, per currency) |
+| 3 | Invariant when a new source/status is added | allow-list default is $0; new unmapped status changes nothing and is surfaced by `/metrics/unmapped` | `test_new_status_does_not_change_revenue` |
+| 4 | A second divergent computation is caught | revenue is summed in exactly one place; a static guard fails the build otherwise | `tests/test_single_definition.py` (demonstrated failing on a rogue file) |
+
+## Anti-drift discipline
+- **Money as integer minor units** (`BIGINT`), never float. `amount_minor` is the authoritative value; the major-unit string is presentation only.
+- **UTC everywhere**; day/week buckets cut with `date_trunc(... AT TIME ZONE 'UTC')` so both views share boundaries.
+- **Half-open ranges `[start, end)`** in both views — no boundary double-counting.
+- **Per-currency totals** — USD and EUR are never summed into one number.
+
+## Sources & vocabularies (deliberately different)
+
+| source | "collected" is | also emits |
+|--------|----------------|-----------|
+| `stripe` (real, test mode) | `succeeded` | `processing`, `canceled`, … |
+| `billing` (synthetic) | `paid` | `open`, `void`, `refunded` |
+| `pos` (synthetic) | `completed` | `pending`, `failed`, **`disputed`** ← left unmapped on purpose |
+
+## Run it
+
+```bash
+# DATABASE_URL must point at Supabase (Session pooler URI). See .env.example.
+python -m metrics.seed                       # schema + status map + sample txns
+uvicorn metrics.api:app --port 8100
+
+curl "localhost:8100/metrics/revenue?start=2026-07-01&end=2026-08-01"
+curl "localhost:8100/metrics/revenue/breakdown?start=2026-07-01&end=2026-08-01&bucket=day"
+curl "localhost:8100/metrics/unmapped"
+
+pytest tests/ -v                             # the four drift guards
+```
+
+Verified against live Supabase: summary `USD 396.99 / EUR 80.00` equals the
+day-by-day breakdown summed; `pos/disputed` (9000) is excluded and surfaced;
+the guard test fails when a rogue `SUM(amount_minor)` is added elsewhere.
+
+## Metrics layout
+```
+metrics/
+  canonical.py   THE single source of truth: allow-list + collected_revenue()
+  schema.sql     transactions + status_map
+  db.py          Supabase access, idempotent upsert, unmapped diagnostic
+  seed.py        real Stripe + 2 synthetic sources, the status map
+  api.py         /metrics/revenue, /revenue/breakdown, /unmapped
+  config.py      DATABASE_URL (auto-encodes a raw '@' in the password)
+tests/           agreement · allow-list · single-definition guard
+```
