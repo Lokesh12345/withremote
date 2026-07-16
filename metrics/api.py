@@ -13,6 +13,8 @@ Run:  uvicorn metrics.api:app --port 8100
 """
 from __future__ import annotations
 
+import os
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Optional
@@ -21,7 +23,27 @@ from fastapi import FastAPI, HTTPException, Query
 
 from . import canonical, db
 
-app = FastAPI(title="canonical revenue metrics")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """On startup ensure the schema/view exist (idempotent). If SEED_ON_START
+    is truthy, also load the status map + sample data — handy for a fresh
+    Render deploy so the endpoints return data immediately."""
+    try:
+        conn = db.connect()
+        db.init_schema(conn)
+        if os.environ.get("SEED_ON_START", "").lower() in ("1", "true", "yes"):
+            from . import seed
+            seed.seed_status_map(conn)
+            seed.seed_synthetic(conn)
+            seed.seed_stripe(conn)
+        conn.close()
+    except Exception as e:  # don't crash the web process if the DB is briefly down
+        print(f"[startup] schema init skipped: {type(e).__name__}: {e}")
+    yield
+
+
+app = FastAPI(title="canonical revenue metrics", lifespan=lifespan)
 
 # Minor-unit exponent for presentation only. The canonical value is the integer
 # amount_minor; major is derived just for human display.

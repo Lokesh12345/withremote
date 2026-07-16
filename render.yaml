@@ -1,0 +1,23 @@
+# Render Blueprint. In Render: New > Blueprint, point it at this repo, and it
+# provisions the service below. Set the secret env vars in the dashboard (they
+# are intentionally NOT stored here).
+services:
+  # PS2 — canonical revenue metrics API (Supabase-backed, state persists).
+  - type: web
+    name: revenue-metrics
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn metrics.api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      # Load status map + sample data on first boot so endpoints return data.
+      - key: SEED_ON_START
+        value: "true"
+      # --- secrets: set these in the Render dashboard, do NOT commit values ---
+      - key: DATABASE_URL      # Supabase Session-pooler URI (port 5432, pooler host)
+        sync: false
+      - key: STRIPE_API_KEY    # sk_test_... (one real transaction source)
+        sync: false
