@@ -1,3 +1,7 @@
+## Video 
+
+https://www.loom.com/share/80c4b24597604b59bc0b1a036d5a7cea
+
 # Backend assignment — data correctness & failure handling
 
 Two backend problems, both about **data that doesn't lie**: correctness under
